@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6 Senaryo — Diyetisyen Demo</title>
+<meta name="robots" content="noindex">
+<style>
+:root{
+  --paper:#fbfaf7; --surface:#ffffff; --surface-2:#f2f5f0;
+  --line:rgba(30,42,36,.10); --line-2:rgba(30,42,36,.18);
+  --ink:#1e2a24; --ink-dim:#5d6b64;
+  --leaf:#4a8f6b; --leaf-deep:#2f6b4c; --leaf-dark:#245a3e; --leaf-soft:#e8f2ec;
+  --font-display:Georgia,"Times New Roman",serif;
+  --font-ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-ui);
+  -webkit-font-smoothing:antialiased;line-height:1.6;
+  background-image:radial-gradient(ellipse 60% 40% at 74% -8%,rgba(74,143,107,.10),transparent 62%)}
+a{color:inherit;text-decoration:none}
+video{display:block;width:100%;height:100%;object-fit:cover;background:var(--surface-2)}
+:focus-visible{outline:2px solid var(--leaf-deep);outline-offset:3px;border-radius:3px}
+
+.wrap{max-width:1340px;margin:0 auto;padding:32px min(5vw,44px) 80px}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;
+  padding-bottom:24px;margin-bottom:40px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;line-height:1}
+.brand-mono{width:34px;height:34px;display:grid;place-items:center;flex:none;
+  border-radius:50%;background:var(--leaf-soft);color:var(--leaf-dark);
+  font-family:var(--font-display);font-size:16px;font-style:italic}
+.brand-text{display:flex;flex-direction:column;gap:5px}
+.brand-name{font-family:var(--font-display);font-size:16px}
+.brand-sub{font-size:8.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-dim)}
+.back{padding:10px 18px;border:1.5px solid var(--line-2);border-radius:100px;
+  font-size:13px;font-weight:600;color:var(--ink-dim);white-space:nowrap;
+  transition:color .2s,border-color .2s,background .2s}
+.back:hover{color:var(--leaf-dark);border-color:var(--leaf-deep);background:var(--surface)}
+
+header .kick{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--leaf-dark);
+  margin-bottom:18px;font-weight:700;display:inline-flex;align-items:center;gap:12px}
+header .kick::before{content:"";width:28px;height:2px;background:var(--leaf);border-radius:2px}
+header h1{font-family:var(--font-display);font-weight:400;
+  font-size:clamp(32px,4.4vw,52px);line-height:1.1;letter-spacing:-.012em;max-width:760px}
+header h1 em{font-style:italic;color:var(--leaf-dark)}
+header p{margin-top:20px;max-width:640px;font-size:16px;line-height:1.72;color:var(--ink-dim)}
+.legend{margin-top:28px;display:flex;gap:9px;flex-wrap:wrap}
+.chip{padding:8px 15px;border:1px solid var(--line);border-radius:100px;font-size:12.5px;
+  color:var(--ink-dim);background:var(--surface)}
+.chip b{color:var(--leaf-dark);font-weight:700}
+
+.grid{margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:24px 22px}
+
+.card{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);
+  overflow:hidden;display:flex;flex-direction:column;
+  transition:border-color .35s, transform .35s, box-shadow .35s}
+.card:hover{border-color:rgba(74,143,107,.45);transform:translateY(-4px);
+  box-shadow:0 20px 46px rgba(30,42,36,.1)}
+.card.pick{border-color:rgba(74,143,107,.55);box-shadow:0 10px 30px rgba(47,107,76,.09)}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  aspect-ratio:32/9;position:relative}
+.pane{position:relative;overflow:hidden;background:var(--surface-2)}
+.pane .tag{position:absolute;left:8px;top:8px;z-index:2;padding:4px 10px;border-radius:100px;
+  font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;
+  background:rgba(255,255,255,.9);color:var(--leaf-dark);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+/* video yoksa boş kutu görünmesin — açık desenli yer tutucu */
+.pane::before{content:"";position:absolute;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 60% at 62% 34%,rgba(74,143,107,.14),transparent 64%),
+    linear-gradient(160deg,#ffffff,#eaf0ea)}
+.pane video{position:relative;z-index:1}
+
+.body{padding:22px 22px 24px;display:flex;flex-direction:column;flex:1;gap:13px}
+.no{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--leaf-dark);
+  font-weight:700}
+.card h2{font-family:var(--font-display);font-weight:400;font-size:23px;line-height:1.2}
+.card h2 em{font-style:italic;color:var(--leaf-dark)}
+.meta{display:flex;flex-direction:column;gap:8px;padding:14px 0;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.meta div{display:flex;gap:12px;font-size:13px;line-height:1.5}
+.meta .k{flex:none;width:48px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--leaf-dark);font-weight:700;padding-top:3px}
+.meta .v{color:var(--ink-dim)}
+.note{font-size:14px;line-height:1.65;color:var(--ink-dim);flex:1}
+.open{margin-top:4px;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  padding:13px 20px;border-radius:100px;font-size:13.5px;font-weight:600;
+  background:var(--leaf-deep);color:#fff;border:1.5px solid var(--leaf-deep);
+  transition:background .25s,transform .22s,box-shadow .25s}
+.open:hover{background:var(--leaf-dark);border-color:var(--leaf-dark);
+  transform:translateY(-2px);box-shadow:0 12px 26px rgba(47,107,76,.26)}
+.card:not(.pick) .open{background:var(--surface);color:var(--ink);border-color:var(--line-2)}
+.card:not(.pick) .open:hover{background:var(--leaf-soft);color:var(--leaf-dark);
+  border-color:var(--leaf-deep)}
+
+footer{margin-top:60px;padding-top:24px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  font-size:12.5px;color:var(--ink-dim)}
+footer a{color:var(--leaf-dark);font-weight:600}
+
+@media(max-width:1080px){ .grid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:700px){
+  .wrap{padding:22px 18px 64px}
+  .topbar{margin-bottom:28px}
+  .brand-sub{display:none}
+  .grid{grid-template-columns:1fr;gap:18px}
+  .duo{aspect-ratio:2/1}
+}
+@media(prefers-reduced-motion:reduce){ .card{transition:none} .card:hover{transform:none} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="topbar">
+  <a class="brand" href="index.html">
+    <span class="brand-mono" aria-hidden="true">D</span>
+    <span class="brand-text">
+      <span class="brand-name">Dyt. [Ad Soyad]</span>
+      <span class="brand-sub">Beslenme ve Diyet Uzmanı · Kütahya</span>
+    </span>
+  </a>
+  <a class="back" href="index.html">← Siteye dön</a>
+</div>
+
+<header>
+  <p class="kick">Demo · Karşılaştırma</p>
+  <h1>Altı senaryo,<br><em>tek sayfada.</em></h1>
+  <p>3 hero videosu × 2 scroll videosu. Her kartta soldaki kutu sitenin açılışında arkada dönen videoyu, sağdaki kutu kaydırdıkça kare kare ilerleyen videoyu gösteriyor. Kartın altındaki düğme o senaryoyu gerçek sitede açar.</p>
+
+  <div class="legend">
+    <span class="chip"><b>Sabah</b> — mermer tezgâhta sabah ışığı, buğulanan kâse</span>
+    <span class="chip"><b>Pazar</b> — mevsim sebzeleri, tahıl kâseleri, ahşap yüzey</span>
+    <span class="chip"><b>Su</b> — cam sürahi, yeşil yaprak, ferah beyaz oda</span>
+    <span class="chip"><b>Tezgâh</b> — boş tezgâhtan hazır tabağa doğru kayan kamera</span>
+    <span class="chip"><b>Tepeden</b> — tabağın üstünden sabit hızda yükselen kamera</span>
+  </div>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<footer>
+  <span>Videolar: Higgsfield · Kareler: 120 adet, 1280px · Hero: 16 sn dikişsiz boomerang loop · İnsan/yüz yok</span>
+  <span><a href="index.html">Varsayılan siteyi aç →</a></span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+
+const HERO = {
+  '1': {ad:'Sabah', uzun:'Mermer tezgâh · sabah ışığı · buğu'},
+  '2': {ad:'Pazar', uzun:'Mevsim sebzeleri · tahıl kâseleri'},
+  '3': {ad:'Su',    uzun:'Cam sürahi · yeşil yaprak · ferah oda'}
+};
+const SCRL = {
+  'a': {ad:'Tezgâh',  uzun:'Boş tezgâhtan hazır tabağa yürüyüş'},
+  'b': {ad:'Tepeden', uzun:'Tabağın üstünden yavaş yükselme'}
+};
+
+const SENARYO = [
+  {h:'1', s:'a', pick:true,
+   baslik:'Sabah + <em>Tezgâh</em>',
+   not:'En sıcak ve en davetkâr kombinasyon. Sabah ışığı güven veriyor, scroll da aynı mutfak dilinde devam ediyor. Genel kilo yönetimi ve alışkanlık odaklı çalışan diyetisyenler için ilk tercih.'},
+  {h:'1', s:'b',
+   baslik:'Sabah + <em>Tepeden</em>',
+   not:'Açılışta ev sıcaklığı, scroll\'da klinik düzen. "Sıcak karşılarım ama işi ciddiye alırım" mesajını en dengeli veren kurgu.'},
+  {h:'2', s:'a',
+   baslik:'Pazar + <em>Tezgâh</em>',
+   not:'Renk en yüksek burada — mevsim sebzeleri hemen dikkat çekiyor. Instagram\'dan gelen trafikte en çok durduran açılış. Renk yoğunluğu nedeniyle hero metni en dikkatli ayarlanması gereken senaryo.'},
+  {h:'2', s:'b',
+   baslik:'Pazar + <em>Tepeden</em>',
+   not:'Canlı açılış + düzenli, ölçülü scroll. Hem taze hem profesyonel; sosyal medyası aktif diyetisyenlere uyuyor.'},
+  {h:'3', s:'a', pick:true,
+   baslik:'Su + <em>Tezgâh</em>',
+   not:'En sakin ve en ferah senaryo. Minimal açılış hero metnini en rahat taşıyan seçenek — kontrast açısından da en güvenlisi. Klinik ve tıbbi beslenme tedavisi ağırlıklı çalışanlar için uygun.'},
+  {h:'3', s:'b',
+   baslik:'Su + <em>Tepeden</em>',
+   not:'Baştan sona sakin, klinik ve ölçülü. Hastalıklarda beslenme ve kurumsal iş birlikleri öne çıkacaksa bu kurgu en ciddi duranı.'}
+];
+
+const grid = document.getElementById('grid');
+const frag = document.createDocumentFragment();
+
+SENARYO.forEach((x, i) => {
+  const url = 'index.html?h=' + x.h + '&s=' + x.s;
+  const card = document.createElement('article');
+  card.className = 'card' + (x.pick ? ' pick' : '');
+  card.innerHTML =
+    '<div class="duo">' +
+      '<div class="pane"><span class="tag">Hero</span>' +
+        '<video src="media/preview/h' + x.h + '.mp4" muted loop playsinline preload="metadata"></video></div>' +
+      '<div class="pane"><span class="tag">Scroll</span>' +
+        '<video src="media/preview/s' + x.s + '.mp4" muted loop playsinline preload="metadata"></video></div>' +
+    '</div>' +
+    '<div class="body">' +
+      '<span class="no">Senaryo ' + String(i+1).padStart(2,'0') + (x.pick ? ' · Önerilen' : '') + '</span>' +
+      '<h2>' + x.baslik + '</h2>' +
+      '<div class="meta">' +
+        '<div><span class="k">Hero</span><span class="v">' + HERO[x.h].uzun + '</span></div>' +
+        '<div><span class="k">Scroll</span><span class="v">' + SCRL[x.s].uzun + '</span></div>' +
+      '</div>' +
+      '<p class="note">' + x.not + '</p>' +
+      '<a class="open" href="' + url + '">Bu senaryoyu aç <span aria-hidden="true">→</span></a>' +
+    '</div>';
+  frag.appendChild(card);
+});
+grid.appendChild(frag);
+
+/* video henüz yoksa boş element kalmasın → açık desenli yer tutucu görünsün */
+grid.querySelectorAll('video').forEach(v => {
+  v.addEventListener('error', () => v.remove(), true);
+});
+
+/* Sadece görünen kartların videosu oynasın — 12 video aynı anda dönmesin */
+const vids = grid.querySelectorAll('video');
+if (matchMedia('(prefers-reduced-motion: reduce)').matches){
+  vids.forEach(v => v.removeAttribute('loop'));
+} else if (self.IntersectionObserver){
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.play().catch(()=>{});
+      else e.target.pause();
+    });
+  }, {threshold:.25});
+  vids.forEach(v => io.observe(v));
+}
+})();
+</script>
+</body>
+</html>
