@@ -263,8 +263,7 @@ yukarıdaki `drawtext` komutunu kullan (`drawtext` bu ffmpeg derlemesinde mevcut
 
 ## Kontrast — ölçülmüş değerler
 
-Aydınlık sitede en büyük risk açık zemin + açık video. Ölçüldü (WCAG 2.1, en kötü durum
-= altındaki video **tamamen siyah** varsayımı; gerçek high-key videoda hepsi daha iyi):
+### Düz zeminde
 
 | Metin | Zemin | Oran |
 |---|---|---|
@@ -272,11 +271,56 @@ Aydınlık sitede en büyük risk açık zemin + açık video. Ölçüldü (WCAG
 | `--ink-dim` #5d6b64 | `--paper` | **5.36:1** |
 | `--leaf-dark` #245a3e | `--paper` | **7.72:1** |
 | beyaz | `--leaf-deep` #2f6b4c (düğme) | **6.31:1** |
-| `--ink` | hero metin alanı, en kötü durum | **7.76:1** |
-| `--hero-sub` #2b3832 | hero metin alanı, en kötü durum | **6.39:1** |
-| `--ink` | mobil hero, en kötü durum | **12.45:1** |
 
-Hepsi 4.5:1 eşiğinin üstünde.
+### Video üstünde — beyaz yıkama nasıl ayarlandı
+
+İlk sürümde yıkamayı "video tamamen siyah olabilir" varsayımıyla kurmuştum: metin
+bölgesinde efektif alfa **0.90**'a çıkıyordu ve videolar yıkanmış görünüyordu.
+Videolar gelince varsayım yerine **gerçek ölçüm** kullanıldı:
+
+1. Her videonun/kare setinin metin bölgesi, **tüm karelerde**, x-bandına bölünerek tarandı;
+   her bantta en karanlık ~satır-yüksekliği hücrenin luminansı bulundu.
+2. Metin kutularının gerçek konumları tarayıcıdan alındı (`getBoundingClientRect`).
+3. Gradyan durakları, her metnin kendi konumundaki en karanlık zemine karşı
+   eşiği geçecek **en düşük** alfa ile kuruldu.
+
+Sonuç: çekirdek metin bölgesinde alfa **0.90 → 0.58–0.64**, sağ taraf **tamamen açık**
+(eskiden %74'te hâlâ 0.43 vardı, şimdi %80'de sıfır).
+
+Metin bölgesinde ölçülen en karanlık video luminansları:
+
+| | hero1 | hero2 | hero3 | frames/a | frames/b |
+|---|---|---|---|---|---|
+| en karanlık L | 0.052 | 0.052 | 0.427 | 0.004 | 0.034 |
+
+Hero 3 (su) o kadar aydınlık ki teknik olarak hiç yıkama gerektirmiyor; gradyan
+en karanlık senaryoya (frames/a, L=0.004) göre kurulduğu için orada bol payla geçiyor.
+
+**Doğrulama sonucu — 5 video × 8 metin × masaüstü ve mobil, hepsi eşiğin üstünde:**
+
+| Metin | En düşük oran | Eşik |
+|---|---|---|
+| `.hero-kick` (yeşil vurgu) | 6.71:1 | 4.5 |
+| `.hero h1` | 5.38:1 | 3.0 (büyük metin) |
+| `.hero-sub` | 6.81:1 | 4.5 |
+| `.hero-note` | 7.40:1 | 4.5 |
+| nav marka / linkleri | 7.30:1 | 4.5 |
+| `.stage-num` | 6.67:1 | 4.5 |
+| sahne `h2` | 5.11:1 | 3.0 (büyük metin) |
+| sahne `p` | **4.86:1** ← en düşük | 4.5 |
+
+Başlıklar büyük metin olduğu için WCAG eşiği 3:1; yine de hepsi 4.5'in üstünde.
+
+**Gradyanın taşıyamadığı iki yer, yıkamayı artırmak yerine noktasal çözüldü:**
+
+- **Yeşil vurgu metni** (`--leaf-dark`) hero1'de 0.67 alfa istiyordu — tüm frame'i
+  yıkamak yerine `.hero-kick` ve `.stage-num`'a yumuşak hap zemini verildi
+  (`rgba(232,242,236,.92)`) → videodan bağımsız 6.7:1.
+- **Nav linkleri** videonun üstünde `--ink-dim` ile 2.36:1'de kalıyordu. Şeffaf navda
+  `--ink`/600, sayfa kayıp zemin kâğıda dönünce `--ink-dim`/500 oluyor. Ek yıkama yok.
+- `.scroll-cue` sağ kenarda, orada scrim artık sıfır → kendi hap zeminini taşıyor.
+
+Yeni video geldiğinde bu ölçümü tekrarla; alfaları körlemesine kopyalama.
 
 > **İKİ RENK METİN İÇİN KULLANILMAZ:**
 > `--leaf` #4a8f6b (paper üstünde 3.70:1) ve `--warm` #d9a566 (2.11:1).

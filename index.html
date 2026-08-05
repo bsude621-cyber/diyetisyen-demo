@@ -145,8 +145,13 @@ button{background:none;border:0;cursor:pointer}
 .brand-sub{font-size:9px;letter-spacing:.26em;text-transform:uppercase;color:var(--ink-dim)}
 .nav-menu{display:flex;align-items:center;gap:36px}
 .nav-links{display:flex;gap:30px}
-.nav-links a{font-size:13px;letter-spacing:.02em;color:var(--ink-dim);
-  font-weight:500;transition:color .2s;position:relative}
+/* Şeffaf navda linkler videonun üstünde duruyor ve orada scrim zayıf.
+   --ink-dim orada 2.36:1'de kalıyordu (ölçüldü) → hero üstündeyken --ink,
+   sayfa kayıp zemin kâğıda dönünce --ink-dim. Yıkamayı artırmaya gerek yok. */
+.nav-links a{font-size:13px;letter-spacing:.02em;color:var(--ink);
+  font-weight:600;transition:color .2s;position:relative}
+.nav.scrolled .nav-links a{color:var(--ink-dim);font-weight:500}
+.nav.scrolled .nav-links a:hover{color:var(--ink)}
 .nav-links a::after{content:"";position:absolute;left:0;bottom:-6px;width:0;height:1.5px;
   background:var(--leaf);transition:width .3s;border-radius:2px}
 .nav-links a:hover{color:var(--ink)}
@@ -202,22 +207,29 @@ button{background:none;border:0;cursor:pointer}
   background:
     repeating-linear-gradient(90deg,transparent 0 132px,rgba(30,42,36,.045) 132px 133px),
     repeating-linear-gradient(0deg,transparent 0 110px,rgba(30,42,36,.035) 110px 111px)}
-/* AÇIK SCRIM — metin koyu, zemin garanti altına alınır.
-   En kötü durum (video tamamen siyah) hesaplandı:
-   metin alanında yatay alfa >=.62 → --ink 7.76:1 · --hero-sub 6.39:1 · beyaz zeminde çok daha iyi. */
+/* AÇIK SCRIM — metin koyu, zemin ölçülerek aydınlatılır.
+   Alfalar TAHMİNLE değil, videoların metin bölgesindeki gerçek parlaklık profili
+   ölçülerek kuruldu (x-bandına göre en karanlık hücre, tüm kareler taranarak).
+   Gereken minimum (4.5:1, --hero-sub için) x-bandına göre:
+     hero1 .48 .44 .40 .38 .34  ·  hero2 .00 .00 .00 .26 .34  ·  hero3 hiç gerekmiyor
+   Verilen değer her bantta bunun üstünde; sağ taraf tamamen açık bırakıldı. */
 .hero-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
   background:
-    linear-gradient(90deg,rgba(255,255,255,.92) 0%,rgba(255,255,255,.86) 30%,
-      rgba(255,255,255,.62) 52%,rgba(255,255,255,.18) 74%,rgba(255,255,255,0) 88%),
-    linear-gradient(180deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.22) 22%,
-      rgba(255,255,255,.26) 62%,rgba(251,250,247,.88) 92%,var(--paper) 100%),
-    linear-gradient(rgba(255,255,255,.30),rgba(255,255,255,.30))}
+    linear-gradient(90deg,rgba(255,255,255,.60) 0%,rgba(255,255,255,.58) 36%,
+      rgba(255,255,255,.46) 54%,rgba(255,255,255,.18) 68%,rgba(255,255,255,0) 80%),
+    linear-gradient(180deg,rgba(255,255,255,.50) 0%,rgba(255,255,255,.10) 14%,
+      rgba(255,255,255,0) 30%,rgba(255,255,255,0) 86%,
+      rgba(251,250,247,.42) 94%,var(--paper) 100%)}
 .hero-inner{position:relative;z-index:2;height:100%;padding:0 var(--pad);
-  display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:15vh}
+  display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:17vh}
+/* Yeşil vurgu metni gradyandan daha yüksek alfa istiyor (hero1'de .67).
+   Tüm frame'i yıkamak yerine sadece bu etikete yumuşak zemin ver → 5.5:1 garanti,
+   videonun geri kalanına dokunulmaz. */
 .hero-kick{font-size:12px;letter-spacing:.22em;text-transform:uppercase;
   color:var(--leaf-dark);margin-bottom:22px;font-weight:700;
-  display:inline-flex;align-items:center;gap:12px;max-width:fit-content}
-.hero-kick::before{content:"";width:30px;height:2px;background:var(--leaf);border-radius:2px}
+  display:inline-flex;align-items:center;gap:11px;max-width:fit-content;
+  background:rgba(232,242,236,.92);padding:7px 15px 7px 12px;border-radius:100px}
+.hero-kick::before{content:"";width:26px;height:2px;background:var(--leaf);border-radius:2px}
 .hero h1{font-family:var(--font-display);font-weight:400;
   font-size:clamp(34px,4.6vw,62px);line-height:1.1;letter-spacing:-.012em;
   max-width:620px;margin:0 0 22px;color:var(--ink)}
@@ -245,9 +257,12 @@ button{background:none;border:0;cursor:pointer}
 .btn-ghost{border:1.5px solid var(--line-2);color:var(--ink);background:rgba(255,255,255,.7)}
 .btn-ghost:hover{border-color:var(--leaf-deep);color:var(--leaf-dark);
   background:#fff;transform:translateY(-2px)}
+/* sağ kenarda scrim artık sıfır → bu etiket kendi zeminini taşır */
 .scroll-cue{position:absolute;right:var(--pad);bottom:5vh;z-index:2;
   display:flex;flex-direction:column;align-items:center;gap:10px;
   font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--hero-sub)}
+.scroll-cue > span:first-child{background:rgba(255,255,255,.82);padding:6px 11px;
+  border-radius:100px}
 .scroll-cue .line{width:2px;height:50px;border-radius:2px;
   background:linear-gradient(var(--leaf),rgba(74,143,107,0));
   animation:cue 2s ease-in-out infinite}
@@ -261,14 +276,16 @@ button{background:none;border:0;cursor:pointer}
 .scene{position:relative;height:500vh;background:var(--paper)}
 .stick{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden}
 .scrub-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:0}
-/* canvas üstü AÇIK yıkama — sahne metni koyu, zemin garanti aydınlık */
+/* canvas üstü AÇIK yıkama — hero ile aynı yöntem, kare setleri ölçülerek.
+   Gereken minimum (4.5:1, --hero-sub) x-bandına göre:
+     frames/a .48 .52 .52 .48 .46  ·  frames/b .34 .46 .42 .46 .38
+   Scroll kareleri hero'dan bir tık karanlık, o yüzden burada alfa hafif yüksek. */
 .grade{position:absolute;inset:0;z-index:1;pointer-events:none;
   background:
-    linear-gradient(90deg,rgba(255,255,255,.9) 0%,rgba(255,255,255,.76) 40%,
-      rgba(255,255,255,.3) 66%,rgba(255,255,255,.04) 86%),
-    linear-gradient(180deg,rgba(255,255,255,.5) 0%,rgba(255,255,255,.12) 24%,
-      rgba(255,255,255,.2) 66%,rgba(251,250,247,.86) 100%),
-    linear-gradient(rgba(255,255,255,.28),rgba(255,255,255,.28))}
+    linear-gradient(90deg,rgba(255,255,255,.66) 0%,rgba(255,255,255,.64) 40%,
+      rgba(255,255,255,.50) 54%,rgba(255,255,255,.20) 68%,rgba(255,255,255,0) 82%),
+    linear-gradient(180deg,rgba(255,255,255,.30) 0%,rgba(255,255,255,0) 18%,
+      rgba(255,255,255,0) 84%,rgba(251,250,247,.40) 96%,var(--paper) 100%)}
 .stage{position:absolute;left:var(--pad);right:var(--pad);top:50%;z-index:3;
   pointer-events:none;will-change:opacity,transform}
 .stage-inner{max-width:600px}
@@ -276,9 +293,11 @@ button{background:none;border:0;cursor:pointer}
   font-size:clamp(30px,4.4vw,54px);line-height:1.1;letter-spacing:-.012em;color:var(--ink)}
 .stage h2 em{font-style:italic;color:var(--leaf-dark)}
 .stage p{margin-top:18px;max-width:430px;font-size:16px;line-height:1.7;color:var(--hero-sub)}
+/* hero-kick ile aynı gerekçe: yeşil vurgu metnine kendi zemini */
 .stage-num{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;font-weight:700;
-  color:var(--leaf-dark);margin-bottom:16px;display:inline-flex;align-items:center;gap:11px}
-.stage-num::before{content:"";width:26px;height:2px;background:var(--leaf);border-radius:2px}
+  color:var(--leaf-dark);margin-bottom:16px;display:inline-flex;align-items:center;gap:10px;
+  background:rgba(232,242,236,.92);padding:6px 14px 6px 11px;border-radius:100px}
+.stage-num::before{content:"";width:24px;height:2px;background:var(--leaf);border-radius:2px}
 
 /* kapanış kartı */
 .scrub-card{position:absolute;right:var(--pad);bottom:8vh;z-index:4;width:min(370px,86vw);
@@ -543,12 +562,11 @@ footer{background:var(--surface-2);border-top:1px solid var(--line);
   .brand-sub{font-size:8px;letter-spacing:.2em}
   .nav-menu{inset:62px 0 0;padding:28px 20px}
   .nav.scrolled .nav-menu{inset:56px 0 0}
-  /* mobilde hero metni tam genişlik → yatay scrim yerine tek düze aydınlık yıkama.
-     En kötü durumda komposit #ebebeb → --ink 12.45:1 · --hero-sub 10.26:1 */
+  /* mobilde metin tam genişlik → yatay gradyan işe yaramaz, tekdüze yıkama gerek.
+     Tüm x-bantlarındaki en yüksek gereksinim .52 (frames/a) → .60 veriyoruz. */
   .hero-scrim{background:
-    linear-gradient(180deg,rgba(255,255,255,.72) 0%,rgba(255,255,255,.4) 26%,
-      rgba(255,255,255,.66) 54%,rgba(251,250,247,.94) 88%,var(--paper) 100%),
-    linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55))}
+    linear-gradient(180deg,rgba(255,255,255,.66) 0%,rgba(255,255,255,.56) 30%,
+      rgba(255,255,255,.60) 66%,rgba(251,250,247,.9) 92%,var(--paper) 100%)}
   .hero-inner{padding-bottom:calc(13vh + 62px)}
   .hero h1{max-width:none}
   .hero-sub{max-width:none}
@@ -560,9 +578,8 @@ footer{background:var(--surface-2);border-top:1px solid var(--line);
   .foot-copy{flex-direction:column;text-align:center}
   .cred .k{width:88px;font-size:10px}
   .grade{background:
-    linear-gradient(180deg,rgba(255,255,255,.6) 0%,rgba(255,255,255,.3) 28%,
-      rgba(255,255,255,.55) 62%,rgba(251,250,247,.9) 100%),
-    linear-gradient(rgba(255,255,255,.5),rgba(255,255,255,.5))}
+    linear-gradient(180deg,rgba(255,255,255,.64) 0%,rgba(255,255,255,.58) 30%,
+      rgba(255,255,255,.62) 68%,rgba(251,250,247,.88) 96%,var(--paper) 100%)}
   /* mobil WhatsApp barı açılır → sayfa altına pay bırak, demo anahtarını yukarı it */
   .mbar{display:flex}
   body{padding-bottom:70px}
