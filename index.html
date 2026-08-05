@@ -1591,25 +1591,44 @@ document.getElementById('yil').textContent = new Date().getFullYear();
       b.addEventListener('click', () => {
         if (b.dataset.v === cur[g]) return;
         const next = Object.assign({}, cur, {[g]: b.dataset.v});
-        // aynı scroll noktasında A/B karşılaştırabilmek için konumu taşı
-        try { sessionStorage.setItem('demoScroll', String(scrollY)); } catch(e){}
+        // Scroll videosu: aynı noktada A/B karşılaştırmak için konumu taşı.
+        // Hero videosu: sadece sayfanın başında görünür, konumu taşırsan
+        // değişikliği göremezsin → başa dön.
+        try {
+          if (g === 's'){
+            sessionStorage.setItem('demoScroll', String(scrollY));
+            sessionStorage.removeItem('demoTop');
+          } else {
+            sessionStorage.setItem('demoTop', '1');
+            sessionStorage.removeItem('demoScroll');
+          }
+        } catch(e){}
         location.search = hedefUrl(next);
       });
     });
   });
 
-  // reload sonrası scroll konumunu geri koy
+  // reload sonrası konumu ayarla: scroll değiştiyse aynı nokta, hero değiştiyse baş
   try {
     const y = sessionStorage.getItem('demoScroll');
-    if (y !== null){
+    const top = sessionStorage.getItem('demoTop');
+    if (y !== null || top){
       sessionStorage.removeItem('demoScroll');
+      sessionStorage.removeItem('demoTop');
+      // tarayıcının kendi konum geri yüklemesi bizimkini ezmesin
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      const hedef = top ? 0 : +y;
       const prev = document.documentElement.style.scrollBehavior;
       document.documentElement.style.scrollBehavior = 'auto';   // smooth ile çakışmasın
-      scrollTo(0, +y);
-      requestAnimationFrame(() => {
-        scrollTo(0, +y);
+      scrollTo(0, hedef);
+      requestAnimationFrame(() => { scrollTo(0, hedef); });
+      // rAF arka plan sekmesinde hiç ateşlenmez → geri alma işini ona bağlama,
+      // yoksa scrollRestoration 'manual'da kalır ve geri tuşu konumu unutur
+      setTimeout(() => {
+        scrollTo(0, hedef);
         document.documentElement.style.scrollBehavior = prev;
-      });
+        if ('scrollRestoration' in history) history.scrollRestoration = 'auto';
+      }, 120);
     }
   } catch(e){}
 
