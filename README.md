@@ -94,6 +94,10 @@ _tools/             npm ffmpeg/ffprobe — DAĞITILMAZ
 Kareler bölüme **bir buçuk ekran kala** indirilmeye başlar (IntersectionObserver);
 hero'da duran ziyaretçi kare indirmez. Mobilde `STEP = 2` ile kare seyreltilir → yarı bant.
 
+**Ölçülen boyutlar:** dağıtılan toplam **16.3 MB**. Ziyaretçi başına indirilen
+(1 hero webm + 1 kare seti): masaüstü **3.7–6.5 MB**, mobil (`STEP=2`) **2.1–3.7 MB**.
+En hafif senaryo `h=1&s=a` ve `h=3&s=a`, en ağır `h=2&s=b`.
+
 ---
 
 ## Videolar nasıl işlenir
@@ -133,6 +137,16 @@ ffmpeg -y -i media/hero1.mp4 -an -c:v libvpx-vp9 -crf 36 -b:v 0 -row-mt 1 \
 
 Sonuç: 384 kare = tam 16.000 sn, 1600×900.
 
+> **hero3 farklı işlendi.** Higgsfield'in ürettiği 0. kare hafifçe sapmıştı; loop noktasında
+> ortalamanın 4 katı fark veriyordu (ölçüldü: 0.604 / ort 0.147). İleri klipten ilk kare de
+> atıldı → 382 kare = 15.917 sn. Yeni loop farkı 0.267 / ort 0.148 → temiz.
+> Komut farkı sadece şu iki filtrede:
+> ```
+> ileri : -vf "select=gte(n\,1),scale=1600:-2,setpts=N/FRAME_RATE/TB"
+> geri  : -vf "reverse,select=between(n\,1\,190),setpts=N/FRAME_RATE/TB"
+> ```
+> **Yeni video geldiğinde önce dikişi ölç**, körlemesine bu varyantı kullanma.
+
 ### Scroll → 120 kare
 
 ```bash
@@ -149,6 +163,44 @@ ffmpeg -y -i _raw/scroll_raw_alt1.mp4 -vf "fps=15,scale=1280:-2" -q:v 5 \
 
 Watermark çıkarsa CSS ile kapatma, **kaynakta sil**:
 `-vf "delogo=x=1715:y=875:w=175:h=165,fps=15,scale=1280:-2"`
+
+### Scroll A ivmelenmişti — hareket eşitleme ile düzeltildi
+
+`scroll_raw_alt1.mp4` prompt'taki "sabit hız" talimatına rağmen yavaş-hızlı-yavaş
+(ease-in-out) geldi. Kare-arası hareket ölçüldü, çeyrekler: **1.20 / 5.54 / 6.69 / 1.38**
+→ en hızlı/en yavaş oranı **5.55×**. Düz `fps=15` ile bölününce scroll'da ilk çeyrek
+donuk kalıp orta bölüm fırlıyordu. Ayrıca 15 adet neredeyse-donuk kare vardı.
+
+Çözüm — kareleri eşit **zaman** yerine eşit **görsel hareket** aralıklarıyla seç:
+
+1. Kaynağı 60 fps'e ara-kare üreterek çıkar (havuzu 193 → 478 kareye büyütür):
+   ```
+   ffmpeg -y -i _raw/scroll_raw_alt1.mp4 \
+     -vf "scale=1280:-2,minterpolate=fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1" \
+     -q:v 4 _tools/tmp/a60/%04d.jpg
+   ```
+   (~160 sn sürer. Ara kareler artefaktsız çıktı, gözle doğrulandı.)
+2. Her kare çifti için görsel farkı ölç, kümülatif hareket eğrisini kur.
+3. Eğri üzerinde eşit aralıklı 120 nokta seç, o kareleri `frames/a/0001..0120.jpg` olarak yaz.
+
+Sonuç: **120/120 benzersiz kare**, çeyrekler 3.62 / 3.97 / 4.03 / 3.66 → oran **1.11×**,
+donuk kare yok. Script: bu repoda değil, `scratchpad/fixa2.js` mantığı yukarıda özetli.
+
+Ara kare üretmeden doğrudan hareket eşitleme yaparsan (193 kareden 120 seçmek) hızlı
+bölüm için kaynak yetmez ve **22 kare tekrar eder** — ölçüldü, öyle yapma.
+
+Scroll B temiz geldi: çeyrekler 2.20 / 2.76 / 2.65 / 2.69 → oran **1.26×**, düz
+`fps=15,scale=1280:-2 -q:v 6` yeterliydi.
+
+### Videoyu kabul etmeden önce ölç
+
+Gözle "sabit görünüyor" yetmiyor. Her yeni klip için:
+
+- **Scroll:** kareleri 32×18 gri olarak çıkar, kare-arası farkın çeyrek ortalamalarını
+  karşılaştır. **En hızlı/en yavaş < 1.6×** olmalı. Üstündeyse hareket eşitle.
+- **Hero:** loop'u dairesel gez, komşu kare farkı ortalamanın %15'inin altına düşen çift
+  varsa **tekrar eden kare** (takılma) demektir. Dikiş ve loop noktası ortalamanın 3
+  katını geçmemeli.
 
 ### Galeri önizlemeleri
 
@@ -182,7 +234,13 @@ drawtext=fontfile='C\:/Windows/Fonts/arial.ttf':text='Beslenme ve Diyet Uzmani �
 fontcolor=0x245a3e:fontsize=30:x=72:y=556" -q:v 3 og.jpg
 ```
 
+**Üretildi:** hero1'in 3. saniyesinden alınan kare, 1200×630, 35 KB — metinsiz bıraktım,
+isim zaten `og:title` ile kartın yanında görünüyor. Teslimde üstüne isim yazmak istersen
+yukarıdaki `drawtext` komutunu kullan (`drawtext` bu ffmpeg derlemesinde mevcut, doğrulandı).
+
 `og.jpg` yoksa site bozulmaz, link sadece düz metin olarak gider.
+**Dikkat:** `og:image` ve `canonical` mutlak URL olmalı — Vercel alan adı belli olunca
+`index.html` içindeki `ORNEK-ALANADI.vercel.app` geçen 4 satırı değiştir.
 
 ---
 
