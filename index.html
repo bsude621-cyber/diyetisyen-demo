@@ -566,19 +566,16 @@ footer{background:var(--surface-2);border-top:1px solid var(--line);
   .brand-name{font-size:16px}
   .nav-menu{inset:62px 0 0;padding:28px 20px}
   .nav.scrolled .nav-menu{inset:56px 0 0}
-  /* mobilde metin tam genişlik → yatay gradyan işe yaramaz, tekdüze yıkama gerek.
-     Tüm x-bantlarındaki en yüksek gereksinim .52 (frames/a) → .60 veriyoruz. */
+  /* mobilde metin tam genişlik → yatay gradyan işe yaramaz, dikey yıkama gerek.
+     Metin bloğu ilk ekranın ALT yarısında (ölçüldü: %47–%87) → yıkama orada kalır,
+     üst yarı neredeyse açık bırakılır ki video görünsün. Nav bandında (%0–9)
+     yalnızca marka metnini taşıyacak kadar yıkama var (ölçüldü, aşağıdaki tablo). */
   .hero-scrim{background:
-    linear-gradient(180deg,rgba(255,255,255,.66) 0%,rgba(255,255,255,.56) 30%,
-      rgba(255,255,255,.60) 66%,rgba(251,250,247,.9) 92%,var(--paper) 100%)}
-  .hero-inner{padding-bottom:calc(13vh + var(--mbar-h))}
-  /* dar ekranda hap etiketi tek satıra sığmıyor → şerit içinde düzgün sarılsın
-     (içteki uzun span kırılmasın, "· Kütahya" alt satıra insin) */
-  .hero-kick{flex-wrap:wrap;row-gap:2px;max-width:100%}
+    linear-gradient(180deg,rgba(255,255,255,.44) 0%,rgba(255,255,255,.30) 10%,
+      rgba(255,255,255,.14) 24%,rgba(255,255,255,.14) 38%,rgba(255,255,255,.58) 47%,
+      rgba(255,255,255,.62) 80%,rgba(251,250,247,.92) 94%,var(--paper) 100%)}
   .hero h1{max-width:none}
   .hero-sub{max-width:none}
-  .hero-cta{gap:9px}
-  .hero-cta .btn{flex:1;min-width:150px}
   .scroll-cue{display:none}
   .svc-grid,.steps,.contact-tiles{grid-template-columns:1fr}
   .foot-inner{grid-template-columns:1fr}
@@ -620,7 +617,12 @@ footer{background:var(--surface-2);border-top:1px solid var(--line);
 
   /* ---- yazı boyutları (etiket ≥13, gövde ≥16, satır ≥1.5) ---- */
   .brand-sub{font-size:13px;letter-spacing:.08em;line-height:1.35}
-  .nav .brand-sub{text-transform:none;letter-spacing:.01em}
+  /* Şeffaf navda marka alt satırı videonun üstünde duruyor. Üst yıkama videoyu
+     göstermek için düşürüldüğünden --ink-dim orada 2.63:1'e iniyordu (ölçüldü)
+     → nav-linklerinde uygulanan kuralın aynısı: video üstünde koyu metin,
+     sayfa kayıp zemin kâğıda dönünce --ink-dim. Ek yıkama yok. */
+  .nav .brand-sub{text-transform:none;letter-spacing:.01em;color:var(--hero-sub)}
+  .nav.scrolled .brand-sub{color:var(--ink-dim)}
   .hero-kick{font-size:13px;letter-spacing:.1em;line-height:1.5;padding:8px 14px 8px 11px}
   .hero-sub{font-size:16px}
   .hero-note{font-size:13.5px;line-height:1.5}
@@ -673,6 +675,34 @@ footer{background:var(--surface-2);border-top:1px solid var(--line);
   .demo-bar{bottom:calc(var(--mbar-h) + env(safe-area-inset-bottom) + 10px)}
 }
 
+/* =========================================================
+   İLK EKRAN (hero) — metin bloğu küçük kalsın, video görünsün
+   Gerçek telefonda blok ilk ekranın %47'sini kaplıyordu; videoda ne olduğu
+   anlaşılmıyordu. Dokunma hedefi (≥44 px), gövde punto (≥16 px) ve etiket
+   (≥13 px) kuralları KORUNARAK başlık, dolgu ve boşluklar küçültüldü.
+   Bu blok punto kurallarının ARKASINDA duruyor — hero değerleri onları ezmeli.
+   ========================================================= */
+@media(max-width:680px){
+  .hero-inner{padding-bottom:calc(5vh + var(--mbar-h))}
+  /* uzun unvan büyük harf + harf aralığıyla tek satıra sığmıyor, hap iki satıra
+     kırılıp 55 px yer kaplıyordu → mobilde normal yazım, tek satır. Kelimeler aynı. */
+  .hero-kick{text-transform:none;letter-spacing:.02em;font-size:13.5px;line-height:1.5;
+    margin-bottom:12px;padding:7px 14px 7px 11px;flex-wrap:nowrap;max-width:100%}
+  .hero-kick::before{width:18px}
+  .hero h1{font-size:29px;line-height:1.14;margin-bottom:13px}
+  .hero-sub{font-size:16px;line-height:1.5;margin-bottom:18px}
+  .hero-note{margin-top:13px;font-size:13.5px;line-height:1.5}
+  /* eşit genişlik zorlaması "WhatsApp'tan Yaz"ı iki satıra kırıp düğmeyi 78 px
+     yapıyordu → içerik genişliğinde, tek satır, yan yana, 48 px yüksek */
+  .hero-cta{gap:8px;flex-wrap:nowrap}
+  .hero-cta .btn{flex:0 1 auto;min-width:0;padding:12px 15px;font-size:15px;white-space:nowrap}
+  .hero-cta .btn svg{width:16px;height:16px}
+}
+@media(max-width:360px){
+  .hero h1{font-size:27px}
+  .hero-cta .btn{padding:12px 12px;font-size:14.5px;gap:7px}
+}
+
 /* klavye açıkken sabit çubuklar kalksın — form ve sonuç kutusu görünür kalsın */
 body.kb .mbar,body.kb .demo-bar,body.menu-open .demo-bar{display:none}
 
@@ -680,10 +710,12 @@ body.kb .mbar,body.kb .demo-bar,body.menu-open .demo-bar{display:none}
 @media(max-height:540px) and (orientation:landscape){
   .hero{min-height:0;height:100svh}
   .hero-inner{justify-content:center;padding-bottom:6vh;padding-top:64px}
-  .hero h1{font-size:clamp(26px,4.4vw,36px);margin-bottom:14px}
-  .hero-kick{margin-bottom:12px}
-  .hero-sub{margin-bottom:18px;font-size:15.5px}
-  .hero-note{margin-top:14px}
+  /* yatayda ekran alçak: metin sütunu dar tutulur, sağ taraf videoya kalır
+     (ölçüldü: metin+CTA kutusu 620×298 → 440×284, ekranın %60.6'sı → %41) */
+  .hero h1{font-size:30px;line-height:1.14;margin-bottom:12px;max-width:440px}
+  .hero-kick{margin-bottom:10px}
+  .hero-sub{margin-bottom:16px;font-size:16px;line-height:1.5;max-width:400px}
+  .hero-note{margin-top:12px}
   .scroll-cue{display:none}
   .stick{height:100svh}
   .scrub-card{bottom:5vh;padding:18px 20px}
@@ -1400,6 +1432,14 @@ if (heroVideo){
     const cand = [];
     if (MOB) cand.push('media/hero' + HERO + 'm.' + VFMT, 'media/hero' + HERO + 'm.' + alt);
     cand.push('media/hero' + HERO + '.' + VFMT, 'media/hero' + HERO + '.' + alt);
+    /* Dikey telefonda 16:9 video cover ile kırpılıyor: sadece kadrajın
+       %37–62 bandı görünüyor. Üç videoda da asıl özne (kâse / sebzeler /
+       sürahi) sağda kalıyor ve ekrandan düşüyordu — ölçüldü (dikey şeritlerde
+       kenar-yoğunluğu: hero1 %60-100, hero2 %50-100, hero3 %50-80).
+       Mobilde odak noktası o banda kaydırılıyor. Masaüstünde değişmez. */
+    if (MOB){
+      heroVideo.style.objectPosition = ({'1':'76% center','2':'66% center','3':'62% center'})[HERO] || '50% center';
+    }
     let ci = 0;
     function nextSrc(){
       if (ci >= cand.length){ heroVideo.remove(); return; }   // hiçbiri açılmadı → CSS fallback

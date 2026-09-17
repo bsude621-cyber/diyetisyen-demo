@@ -299,6 +299,8 @@ yukarıdaki `drawtext` komutunu kullan (`drawtext` bu ffmpeg derlemesinde mevcut
 | DPR tavanı | `resize()` içindeki `Math.min(devicePixelRatio, 2)` |
 | Palet | `:root` → `--paper --ink --leaf-*` |
 | Hero okunabilirlik | `.hero-scrim` beyaz gradyan alfaları (aşağıdaki tabloya bak) |
+| Mobil hero kadrajı | JS: `heroVideo.style.objectPosition` — hero başına yüzde |
+| Mobil ilk ekran ölçüleri | son `@media(max-width:680px)` bloğu (punto bloğunun ARKASINDA) |
 
 ---
 
@@ -318,6 +320,7 @@ Site masaüstü için kurulmuştu; telefonda kullanılabilir hale getirildi.
    footer linkleri, iletişim kartlarındaki telefon/WhatsApp linkleri, demo senaryo
    anahtarındaki tüm düğmeler. Görsel boyut korundu, alan `min-height` + padding ile büyüdü.
 3. **Yazı boyutları:** gövde metni ≥16 px, etiket/ikincil metin ≥13 px, satır yüksekliği ≥1.5.
+   (Hero başlığı ikinci turda 29 px'e indirildi — aşağıdaki "İlk ekran düzeltmesi".)
    8–12.5 px'e düşen 63 yer düzeltildi (marka alt satırı, `kick` etiketleri, `stage-num`,
    BMI ölçek rakamları, `cred` anahtarları, iletişim etiketleri, footer, demo anahtarı).
    Nav marka alt satırı mobilde büyük harf yerine normal yazılıyor — 13 px'de büyük harf
@@ -366,20 +369,60 @@ Site masaüstü için kurulmuştu; telefonda kullanılabilir hale getirildi.
 Ölçüm sadece açılış durumunda değil; **mobil menü açık**, **demo anahtarı açık**,
 **BMI sonucu görünür** ve **ön değerlendirme seçili** durumlarında da tekrarlandı — hepsi 0.
 
-Ekran görüntüleri: `_tools/tmp/mobil/` (375 hero · 375 BMI · 375 iletişim · 375 menü ·
-yatay 812×375 · 1440 hero).
+Ekran görüntüleri: `_tools/tmp/mobil/` (375 hero · 390 hero · 375 BMI · 375 iletişim ·
+375 menü · yatay 812×375 · 1440 hero).
+
+### İlk ekran düzeltmesi — "video görünmüyor" (ikinci tur)
+
+Mobil uyum turunda punto ve dokunma hedefleri büyütülürken hero şişti; gerçek telefonda
+metin + düğmeler ilk ekranın **%47**'sini kaplıyordu ve arkadaki videoda ne olduğu
+anlaşılmıyordu. Dokunma hedefi (≥44 px), gövde (≥16 px) ve etiket (≥13 px) kuralları
+bozulmadan **başlık, dolgu ve boşluklar** küçültüldü:
+
+| Öğe | Önce | Sonra |
+|---|---|---|
+| `.hero h1` | 34 px / satır 1.1 | **29 px** / 1.14 (≤360 px'te 27 px) |
+| Hap etiket (`.hero-kick`) | 13 px BÜYÜK HARF, **iki satır**, 55 px | 13.5 px normal yazım, **tek satır**, 34 px |
+| CTA'lar | `flex:1` + `min-width:150` → "WhatsApp'tan Yaz" iki satır, blok 78 px | içerik genişliğinde, **yan yana**, 109×50 + 180×50 |
+| `.hero-sub` | 16 px / satır 1.68 | 16 px / **1.5** |
+| Alt dolgu | `13vh + 68px` | **`5vh + 68px`** |
+| Bloklar arası boşluk | 22 / 22 / 32 / 24 px | 12 / 13 / 18 / 13 px |
+| Üst yıkama (0–38%) | 0.66 → 0.56 | **0.44 → 0.14** (metin bölgesinde 0.58–0.62 korundu) |
+
+**Metin bloğu / ilk ekran alanı** (`(kicker+h1+alt metin+CTA+not) kutusu ÷ viewport`):
+
+| Ekran | Önce | Sonra | Hedef |
+|---|---|---|---|
+| 375×812 | %47.1 | **%34.9** | ≤%45 |
+| 390×844 | — | **%33.9** | ≤%45 |
+| 320×750 | — | **%41.7** | ≤%45 |
+| 414×896 | — | **%32.1** | ≤%45 |
+| 812×375 (yatay) | %60.6 | **%39.7** | ≤%45 |
+
+**Kadraj (asıl kazanç):** dikey telefonda 16:9 video cover ile kırpılınca kadrajın
+yalnızca **%37–62** bandı görünüyor; üç videoda da özne (kâse / sebzeler / sürahi)
+sağda kalıp ekrandan düşüyordu. Dikey şeritlerde kenar-yoğunluğu ölçüldü —
+hero1 %60–100, hero2 %50–100, hero3 %50–80 — ve mobilde `object-position`
+hero1 `%76`, hero2 `%66`, hero3 `%62` olarak ayarlandı. Masaüstünde değişiklik yok.
+
+> Yeni hero videosu gelince bu iki şeyi tekrarla: (1) şerit ölçümüyle `object-position`,
+> (2) yıkama kontrastı. İkisi birbirine bağlı — kadraj kaydırınca metnin arkasındaki
+> piksel değişir.
 
 ### Bilinen kalan konular
 
-- Hero'daki hap etiketi 375 px'te iki satıra sarıyor ("… UZMANI ·" / "KÜTAHYA").
-  Uzun unvan + büyük harf + harf aralığı tek satıra sığmıyor; sarma düzgün hizalandı.
-  Müşteri unvanı kısaysa tek satıra döner.
 - Mobil kare seti 720 px; 3× ekranda scroll sahnesi masaüstü kadar keskin değil.
   Bilinçli takas — 4 MB yerine 0.8 MB. Daha keskin isteniyorsa `scale=900` ile yeniden üret.
 - Mobil hero kopyaları crf 31; hızlı hareket eden yeni bir videoda blok oluşabilir,
   **yeni video gelince boyut/kaliteyi tekrar ölç**.
 - `viewport-fit=cover` + `env()` değerleri gerçek çentikli cihazda doğrulanmadı
   (masaüstü tarayıcıda inset'ler 0 döner).
+- Dikey telefonda hero videosunun öznesi doğal olarak kadrajın alt yarısında kalıyor;
+  `object-position` yatayda kaydırıyor, dikeyde kırpma zaten yok (16:9 → yükseklik tam
+  oturuyor). Yani özne metnin arkasına denk gelebiliyor — kontrast ölçüldü, sorun yok,
+  ama daha temiz bir kadraj isteniyorsa dikey (9:16) ayrı hero çekimi gerekir.
+- Uzun bir unvan (`?unvan=` ile) hap etiketini yine iki satıra kırabilir; ölçüm
+  "Beslenme ve Diyet Uzmanı · Kütahya" (34 karakter) ile yapıldı.
 
 ---
 
@@ -440,23 +483,33 @@ tekrarlandı. Yöntem aynı: kare/video metin bölgesine cover-fit çizilir, sat
 hücrelere bölünüp en karanlık hücrenin luminansı bulunur, üstüne **mobil** yıkama
 gradyanının o y konumundaki alfası uygulanır (mobilde yıkama yatay değil tekdüze).
 
-375×812'de, 60 mobil kare × 2 set ve 12 zaman noktası × 3 hero:
+375×812'de, 60 mobil kare × 2 set ve 12 zaman noktası × 3 hero. **Hero değerleri
+ikinci turda yeniden hesaplandı**: üst yıkama düşürüldü (0.66 → 0.44/0.14) ve
+`object-position` kaydırıldığı için metnin arkasındaki piksel değişti.
 
 | Metin | En düşük oran | Eşik |
 |---|---|---|
-| `.hero-kick` (hap zeminli) | 6.87:1 | 4.5 |
-| `.hero h1` | 9.12:1 | 3.0 |
-| `.hero-sub` | 7.63:1 | 4.5 |
-| `.hero-note` | 9.30:1 | 4.5 |
-| nav marka adı | 14.25:1 | 4.5 |
-| nav marka alt satırı (`--ink-dim`) | **5.36:1** ← en düşük | 4.5 |
+| `.hero-kick` (hap zeminli) | 6.86:1 | 4.5 |
+| `.hero h1` | 9.20:1 | 3.0 |
+| `.hero-sub` | 7.70:1 | 4.5 |
+| `.hero-note` | 8.90:1 | 4.5 |
+| nav marka adı | 7.00:1 | 4.5 |
+| nav marka alt satırı (`--hero-sub`) | **5.36:1** ← en düşük | 4.5 |
 | `.stage-num` (hap zeminli) | 6.87:1 | 4.5 |
 | sahne `h2` | 9.22:1 | 3.0 |
 | sahne `p` | 7.79:1 | 4.5 |
 | `.scrub-hint` | 11.67:1 | 4.5 |
 
-Mobil değerler masaüstünden yüksek: orada yıkama yatay gradyan (sağ taraf açık),
-mobilde tüm genişlikte tekdüze 0.56–0.66. Yazı boyutları yalnızca **arttığı** için
+**Nav marka alt satırı düzeltildi:** üst yıkama düşünce `--ink-dim` orada **2.63:1**'e
+iniyordu (ölçüldü — ilk turda da sınırdaydı). Nav linklerindeki kuralın aynısı uygulandı:
+şeffaf navda `--hero-sub`, sayfa kayıp zemin kâğıda dönünce `--ink-dim`. Ek yıkama yok.
+
+**Dayanıklılık kontrolü:** video tamamen siyah olsaydı bile (L=0) hero metinleri
+7.64–9.10, nav 6.34 / **4.78** çıkıyor — hepsi eşiğin üstünde. Yani düşürülen üst yıkama
+yalnızca bu üç videoya göre değil, en kötü duruma göre de yeterli.
+
+Sahne (scroll) değerleri masaüstünden yüksek: orada yıkama yatay gradyan (sağ taraf açık),
+mobilde tüm genişlikte tekdüze 0.58–0.62. Yazı boyutları yalnızca **arttığı** için
 hiçbir eşik yükselmedi.
 
 **Gradyanın taşıyamadığı iki yer, yıkamayı artırmak yerine noktasal çözüldü:**
