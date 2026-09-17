@@ -301,6 +301,8 @@ yukarıdaki `drawtext` komutunu kullan (`drawtext` bu ffmpeg derlemesinde mevcut
 | Hero okunabilirlik | `.hero-scrim` beyaz gradyan alfaları (aşağıdaki tabloya bak) |
 | Mobil hero kadrajı | JS: `heroVideo.style.objectPosition` — hero başına yüzde |
 | Mobil ilk ekran ölçüleri | son `@media(max-width:680px)` bloğu (punto bloğunun ARKASINDA) |
+| Nav yüksekliği | JS `navHeight()` → `--navh` (hero metninin üst dolgusu buna bağlı) |
+| Mobil alt bar eylemleri | `<div class="mbar">` — WhatsApp + `.mbar-randevu` (`#iletisim`) |
 
 ---
 
@@ -356,7 +358,7 @@ Site masaüstü için kurulmuştu; telefonda kullanılabilir hale getirildi.
 
 ### Ölçüm (tarayıcıdan, tahmin değil)
 
-| Genişlik | Yatay taşma | <44 px hedef | <13 px yazı | Konsol |
+| Genişlik | Yatay taşma | <44 px hedef | <12 px yazı | Konsol |
 |---|---|---|---|---|
 | 320 | yok | 0 | 0 | temiz |
 | 360 | yok | 0 | 0 | temiz |
@@ -364,6 +366,11 @@ Site masaüstü için kurulmuştu; telefonda kullanılabilir hale getirildi.
 | 390 | yok | 0 | 0 | temiz |
 | 414 | yok | 0 | 0 | temiz |
 | 812×375 (yatay) | yok | 0 | 0 | temiz |
+
+Punto alt sınırı üçüncü turda gövde 15 px / etiket 12 px'e çekildi (hero küçülsün diye).
+Sayfanın geri kalanı hâlâ 16 / 13 px; 15 px'in altındaki tek gövde metni yok, 13 px'in
+altına inen tek yer hero etiketinin 320 px'teki hâli (12.5 px).
+Konsol: favicon 404'ü de kalktı — sekme ikonu gömülü SVG olarak eklendi.
 
 Önce: **35** adet 44 px altı hedef, **63** adet 13 px altı yazı (375×812).
 Ölçüm sadece açılış durumunda değil; **mobil menü açık**, **demo anahtarı açık**,
@@ -405,6 +412,55 @@ sağda kalıp ekrandan düşüyordu. Dikey şeritlerde kenar-yoğunluğu ölçü
 hero1 %60–100, hero2 %50–100, hero3 %50–80 — ve mobilde `object-position`
 hero1 `%76`, hero2 `%66`, hero3 `%62` olarak ayarlandı. Masaüstünde değişiklik yok.
 
+### İlk ekran — üçüncü tur: metin yukarı, video aşağı, CTA'lar alt barda
+
+İkinci turdan sonra metin bloğu ekranın **ortasındaydı**: üstünde navigasyonun altında
+boş bir video bandı, altında da video kalıyordu — yani video ikiye bölünüyordu.
+Ayrıca ekranda **iki WhatsApp düğmesi** vardı (hero + sabit alt bar). Üç değişiklik:
+
+**1. Metin bloğu navigasyonun hemen altına alındı.** `.hero-inner` mobilde
+`justify-content:flex-start` + `padding-top:calc(var(--navh) + 17px)`.
+`--navh` JS ile ölçülüyor (marka adı uzayınca nav büyür; nav küçülmüş `.scrolled`
+hâldeyken ölçüm yapılmaz ki kaydırırken metin zıplamasın). Ölçülen boşluk **16–17 px**.
+Altta kalan alan tek parça video.
+
+**2. Punto bir tık daha küçüldü** (alt sınır: gövde 15 px, etiket 12 px):
+
+| Öğe | 2. tur | 3. tur |
+|---|---|---|
+| `.hero h1` | 29 px / 1.14 | **25 px** / 1.32 (≤360 px'te 24 px) |
+| `.hero-sub` | 16 px / 1.5 | **15 px** / 1.42 |
+| `.hero-kick` | 13.5 px | **13 px** (≤360 px'te 12.5) |
+| Bloklar arası | 12 / 13 / 18 px | **10 / 10 / 12 px** |
+
+**3. Hero'daki iki düğme kaldırıldı, sabit alt bar iki eylem taşıyor:**
+**WhatsApp'tan Yaz** (birincil, yeşil) + **Randevu Al** (beyaz zemin, hedef `#iletisim`
+— hero'daki hedefin aynısı). Hero'da aksiyon kaybolmasın diye tek satırlık
+**"Nasıl çalışıyoruz →"** bağlantısı bırakıldı (`#surec`, 44 px yüksek, blok yüksekliğini
+artırmıyor çünkü `.hero-note` mobilde gizlendi — aynı bilgi "Online Danışmanlık"
+kartında ve iletişimdeki "Kütahya dışında mısınız?" şeridinde zaten var).
+
+> **Telefon ikonu neden kaldırıldı:** 320 px'te alt barda kullanılabilir genişlik
+> 320 − 24 (dolgu) − 20 (iki boşluk) = 276 px. Telefon düğmesi 52 px yer kaplayınca
+> iki metin düğmesine 224 px kalıyor; "WhatsApp'tan Yaz" (≈165 px) + "Randevu Al"
+> (≈105 px) = 270 px sığmıyor, düğmeler iki satıra kırılıyordu. Telefonsuz ikili
+> 375'te 239×50 + 102×50, 390'da 254×50 + 102×50 olarak rahat oturuyor.
+> `tel:` bağlantısı iletişim bölümünde (kart + "Hemen Ara" düğmesi) duruyor.
+
+**Perde ters çevrildi:** metin artık üstte olduğu için yıkama da üste alındı —
+`0.56 → 0.58 (%30) → 0.52 (%40) → 0.10 (%50) → 0.08 (%86)`, altta sayfaya geçiş için
+`%96`'da 0.55 kâğıt. Yani ilk ekranın alt yarısı **neredeyse yıkamasız** video.
+
+| Ekran | Metin bloğu / ilk ekran | Hedef | Metnin altındaki kesintisiz video |
+|---|---|---|---|
+| 375×812 | **%26.0** | ≤%30 | **415 px (%51.1)** |
+| 390×844 | **%25.1** | ≤%30 | **447 px (%52.9)** |
+| 320×750 | **%29.2** | ≤%30 | 327 px (%43.6) |
+| 414×896 | **%21.7** | ≤%30 | 521 px (%58.1) |
+| 812×375 (yatay) | %39.7 | — | sağda 322 px genişlik |
+
+Yatayda alt bar yok, o yüzden hero düğmeleri orada duruyor (metin solda, video sağda).
+
 > Yeni hero videosu gelince bu iki şeyi tekrarla: (1) şerit ölçümüyle `object-position`,
 > (2) yıkama kontrastı. İkisi birbirine bağlı — kadraj kaydırınca metnin arkasındaki
 > piksel değişir.
@@ -422,7 +478,14 @@ hero1 `%76`, hero2 `%66`, hero3 `%62` olarak ayarlandı. Masaüstünde değişik
   oturuyor). Yani özne metnin arkasına denk gelebiliyor — kontrast ölçüldü, sorun yok,
   ama daha temiz bir kadraj isteniyorsa dikey (9:16) ayrı hero çekimi gerekir.
 - Uzun bir unvan (`?unvan=` ile) hap etiketini yine iki satıra kırabilir; ölçüm
-  "Beslenme ve Diyet Uzmanı · Kütahya" (34 karakter) ile yapıldı.
+  "Beslenme ve Diyet Uzmanı · Kütahya" (34 karakter) ile yapıldı. Nav yüksekliği
+  `--navh` ile ölçüldüğü için hero metni yine navigasyonun altında kalır.
+- `.hero-note` ("Online danışmanlık ile Türkiye'nin her yerinden…") mobilde gizli —
+  ilk ekranı kısaltmak için. Masaüstünde duruyor, bilgi ayrıca "Online Danışmanlık"
+  hizmet kartında ve iletişimdeki "Kütahya dışında mısınız?" şeridinde var.
+  Müşteri ille de istiyorsa `.hero-cta,.hero-note{display:none}` satırından çıkar.
+- Mobil alt barda `tel:` yok (yer ölçümü yukarıda). Telefonla arama iletişim
+  bölümündeki karttan ve "Hemen Ara" düğmesinden yapılıyor.
 
 ---
 
@@ -483,22 +546,27 @@ tekrarlandı. Yöntem aynı: kare/video metin bölgesine cover-fit çizilir, sat
 hücrelere bölünüp en karanlık hücrenin luminansı bulunur, üstüne **mobil** yıkama
 gradyanının o y konumundaki alfası uygulanır (mobilde yıkama yatay değil tekdüze).
 
-375×812'de, 60 mobil kare × 2 set ve 12 zaman noktası × 3 hero. **Hero değerleri
-ikinci turda yeniden hesaplandı**: üst yıkama düşürüldü (0.66 → 0.44/0.14) ve
-`object-position` kaydırıldığı için metnin arkasındaki piksel değişti.
+375×812'de, 60 mobil kare × 2 set ve 12 zaman noktası × 3 hero. **Hero değerleri her
+turda yeniden hesaplandı** — metin yeri, punto ve yıkama değişti; aşağıdakiler
+üçüncü turun (metin üstte, ters çevrilmiş perde) değerleri:
 
-| Metin | En düşük oran | Eşik |
-|---|---|---|
-| `.hero-kick` (hap zeminli) | 6.86:1 | 4.5 |
-| `.hero h1` | 9.20:1 | 3.0 |
-| `.hero-sub` | 7.70:1 | 4.5 |
-| `.hero-note` | 8.90:1 | 4.5 |
-| nav marka adı | 7.00:1 | 4.5 |
-| nav marka alt satırı (`--hero-sub`) | **5.36:1** ← en düşük | 4.5 |
-| `.stage-num` (hap zeminli) | 6.87:1 | 4.5 |
-| sahne `h2` | 9.22:1 | 3.0 |
-| sahne `p` | 7.79:1 | 4.5 |
-| `.scrub-hint` | 11.67:1 | 4.5 |
+| Metin | 3 videonun en düşüğü | Video tamamen siyah olsaydı | Eşik |
+|---|---|---|---|
+| `.hero-kick` (hap zeminli) | 6.89:1 | 6.85:1 | 4.5 |
+| `.hero h1` | 9.00:1 | 8.83:1 | 3.0 |
+| `.hero-sub` | 7.71:1 | 7.34:1 | 4.5 |
+| `.hero-link` (hap zeminli) | 7.08:1 | 7.06:1 | 4.5 |
+| nav marka adı | 9.00:1 | 8.67:1 | 4.5 |
+| nav marka alt satırı (`--hero-sub`) | 7.56:1 | 7.16:1 | 4.5 |
+| `.stage-num` (hap zeminli) | 6.87:1 | — | 4.5 |
+| sahne `h2` | 9.22:1 | — | 3.0 |
+| sahne `p` | **7.79:1** | — | 4.5 |
+| `.scrub-hint` | 11.67:1 | — | 4.5 |
+
+`.hero-link` düz metin olarak ölçüldüğünde en kötü durumda **4.49:1** çıkıyordu
+(eşik 4.5) — o yükseklikte yıkama bilerek düşük. Yıkamayı artırmak yerine
+`.hero-kick` / `.scroll-cue` ile aynı kalıp uygulandı: `rgba(255,255,255,.72)` hap
+zemin → videodan bağımsız 7.06:1.
 
 **Nav marka alt satırı düzeltildi:** üst yıkama düşünce `--ink-dim` orada **2.63:1**'e
 iniyordu (ölçüldü — ilk turda da sınırdaydı). Nav linklerindeki kuralın aynısı uygulandı:
