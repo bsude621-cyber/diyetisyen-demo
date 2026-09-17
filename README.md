@@ -82,21 +82,33 @@ index.html          demo site (senaryo + marka parametreli)
 senaryolar.html     6 senaryo karşılaştırma galerisi
 og.jpg              WhatsApp/sosyal link önizleme kartı (1200x630) — video gelince üretilir
 media/
-  hero1..3.mp4/.webm   16 sn dikişsiz boomerang loop, 1600x900, sessiz
-  preview/h1..3.mp4    galeri önizlemeleri (560px)
-  preview/sa,sb.mp4    galeri önizlemeleri
-frames/a/0001..0120.jpg  scroll-scrub kareleri (1280px)
+  hero1..3.mp4/.webm     16 sn dikişsiz boomerang loop, 1600x900, sessiz
+  hero1..3m.mp4/.webm    aynı loop, mobil kopya (1600x900, crf 31 / vp9 crf 42)
+  preview/h1..3.mp4      galeri önizlemeleri (560px)
+  preview/sa,sb.mp4      galeri önizlemeleri
+frames/a/0001..0120.jpg  scroll-scrub kareleri (1280px) — masaüstü
 frames/b/0001..0120.jpg
+frames/am/, frames/bm/   MOBİL kare seti: 720px, q6, sadece tek numaralar (60 kare)
 _raw/               ham Higgsfield çıktıları — DAĞITILMAZ (.gitignore + .vercelignore)
-_tools/             npm ffmpeg/ffprobe — DAĞITILMAZ
+_tools/             npm ffmpeg/ffprobe + mobil ekran görüntüleri — DAĞITILMAZ
 ```
 
 Kareler bölüme **bir buçuk ekran kala** indirilmeye başlar (IntersectionObserver);
-hero'da duran ziyaretçi kare indirmez. Mobilde `STEP = 2` ile kare seyreltilir → yarı bant.
+hero'da duran ziyaretçi kare indirmez. Mobilde `STEP = 2` **ve** ayrı `frames/am|bm`
+seti kullanılır (dosya adları masaüstüyle aynı, sadece tek numaralar var; mobil dosya
+bulunamazsa masaüstü karesine düşülür).
 
-**Ölçülen boyutlar:** dağıtılan toplam **16.3 MB**. Ziyaretçi başına indirilen
-(1 hero webm + 1 kare seti): masaüstü **3.7–6.5 MB**, mobil (`STEP=2`) **2.1–3.7 MB**.
-En hafif senaryo `h=1&s=a` ve `h=3&s=a`, en ağır `h=2&s=b`.
+**Ölçülen boyutlar (Eylül 2026):** dağıtılan toplam **21.5 MB**.
+Ziyaretçi başına indirilen (1 hero + 1 kare seti):
+
+| | en hafif | en ağır |
+|---|---|---|
+| Masaüstü (webm + 120 kare) | `h=1&s=a` **4.3 MB** | `h=2&s=b` **6.5 MB** |
+| Mobil, webm (Android/Chrome) | `h=1&s=a` **1.1 MB** | `h=2&s=b` **1.7 MB** |
+| Mobil, mp4 (iOS Safari) | `h=3&s=a` **1.3 MB** | `h=2&s=b` **2.1 MB** |
+
+Mobilde en ağır senaryo bile **2.5 MB hedefinin altında**. (Tarayıcıdan ölçüldü:
+`performance.getEntriesByType('resource')`, 375×812, h=2&s=b → 1751 KB.)
 
 ---
 
@@ -137,6 +149,20 @@ ffmpeg -y -i media/hero1.mp4 -an -c:v libvpx-vp9 -crf 36 -b:v 0 -row-mt 1 \
 
 Sonuç: 384 kare = tam 16.000 sn, 1600×900.
 
+### Hero → mobil kopya (`hero1m` …)
+
+Çözünürlük **düşürülmez** (telefon dikeyde videoyu cover-crop ediyor; 1280'e inince
+görünen alan 1× CSS pikselin altına düşüyor, ölçüldü). Sadece bit hızı düşürülür:
+
+```bash
+ffmpeg -y -i media/hero1.mp4 -an -c:v libx264 -crf 31 -preset slow \
+  -pix_fmt yuv420p -movflags +faststart media/hero1m.mp4
+ffmpeg -y -i media/hero1m.mp4 -an -c:v libvpx-vp9 -crf 42 -b:v 0 -row-mt 1 \
+  -deadline good -cpu-used 4 media/hero1m.webm
+```
+
+Ölçülen: mp4 528–899 KB (masaüstünde 1.1–2.0 MB), webm 296–592 KB.
+
 > **hero3 farklı işlendi.** Higgsfield'in ürettiği 0. kare hafifçe sapmıştı; loop noktasında
 > ortalamanın 4 katı fark veriyordu (ölçüldü: 0.604 / ort 0.147). İleri klipten ilk kare de
 > atıldı → 382 kare = 15.917 sn. Yeni loop farkı 0.267 / ort 0.148 → temiz.
@@ -160,6 +186,18 @@ ffmpeg -y -i _raw/scroll_raw_alt1.mp4 -vf "fps=15,scale=1280:-2" -q:v 5 \
 - Video 5 sn geldiyse `fps=24` kullan (5×24=120), `FRAME_COUNT` değişmez
 - **1280px / `-q:v 5`** — mimarlık demosundaki 1440/q4'ten hafif. Bu sitenin trafiği
   Instagram bio linkinden, yani mobil veri. Kare seti ~3 MB olmalı.
+
+### Scroll → mobil kare seti (`frames/am`, `frames/bm`)
+
+Mobilde `STEP=2` zaten tek numaralı kareleri kullanıyor; o kareler 720 px'e indirilip
+ayrı klasöre yazılır. **Dosya adları değişmez** — JS sadece klasör adına `m` ekler:
+
+```bash
+for n in $(seq 1 2 120); do f=$(printf "%04d" $n); \
+  ffmpeg -y -i frames/a/$f.jpg -vf "scale=720:-2" -q:v 6 frames/am/$f.jpg; done
+```
+
+Ölçülen: `frames/a` 3993 KB → `frames/am` 811 KB · `frames/b` 5575 KB → `frames/bm` 1159 KB.
 
 Watermark çıkarsa CSS ile kapatma, **kaynakta sil**:
 `-vf "delogo=x=1715:y=875:w=175:h=165,fps=15,scale=1280:-2"`
@@ -254,10 +292,94 @@ yukarıdaki `drawtext` komutunu kullan (`drawtext` bu ffmpeg derlemesinde mevcut
 | Kare indirme eşiği | `IntersectionObserver` `rootMargin:'150% 0px'` |
 | Metin sahne zamanları | `band()`/`bell()`: `0.14–0.26`, `0.30–0.56`, `0.58–0.78`, kart `0.80–0.92` |
 | Sahne metinleri | JS `COPY` sabiti (scroll videosuna göre iki set) |
-| Mobil kare seyreltme | JS `STEP = isMobile ? 2 : 1` |
+| Mobil kare seyreltme | JS `STEP = isMobile ? 2 : 1` · mobil klasör `DIR` |
+| Mobil eşik (video + kare) | JS `MOB` — `(max-width:768px),(max-height:540px)` |
+| Mobil CSS eşiği | `@media(max-width:900px),(max-height:540px)` |
+| Mobil alt bar yüksekliği | `:root --mbar-h` (body alt payı + demo anahtarı buna bağlı) |
 | DPR tavanı | `resize()` içindeki `Math.min(devicePixelRatio, 2)` |
 | Palet | `:root` → `--paper --ink --leaf-*` |
 | Hero okunabilirlik | `.hero-scrim` beyaz gradyan alfaları (aşağıdaki tabloya bak) |
+
+---
+
+## Mobil uyum (Eylül 2026)
+
+Site masaüstü için kurulmuştu; telefonda kullanılabilir hale getirildi.
+**Masaüstü görünümü değişmedi** — değişikliklerin tamamı medya sorgusu içinde.
+İçerik, metin, bölüm sırası ve sağlık sektörü kuralları aynı.
+
+### Ne değişti
+
+1. **Medya sorgusu iki koşullu:** `@media(max-width:900px),(max-height:540px)`.
+   İkinci koşul telefonun **yatay modu** (812×375) için — orada da dokunma hedefi ve
+   yazı kuralları geçerli. 1440×900 masaüstü hiçbir koşula girmiyor.
+2. **Dokunma hedefleri ≥44×44:** nav hamburger, marka bloğu, hizmet kartlarındaki
+   "Bu konuda yazın", ön değerlendirme seçenek çipleri, form alanları, SSS başlıkları,
+   footer linkleri, iletişim kartlarındaki telefon/WhatsApp linkleri, demo senaryo
+   anahtarındaki tüm düğmeler. Görsel boyut korundu, alan `min-height` + padding ile büyüdü.
+3. **Yazı boyutları:** gövde metni ≥16 px, etiket/ikincil metin ≥13 px, satır yüksekliği ≥1.5.
+   8–12.5 px'e düşen 63 yer düzeltildi (marka alt satırı, `kick` etiketleri, `stage-num`,
+   BMI ölçek rakamları, `cred` anahtarları, iletişim etiketleri, footer, demo anahtarı).
+   Nav marka alt satırı mobilde büyük harf yerine normal yazılıyor — 13 px'de büyük harf
+   + harf aralığı 375 px'e sığmıyordu.
+4. **iOS video kuralı:** `<source>` listesi kaldırıldı. Format `canPlayType` ile seçiliyor
+   (Safari → her zaman mp4), **tek `src`** veriliyor, `error` olayında sıradaki adaya
+   geçiliyor: `hero<N>m.<fmt>` → `hero<N>m.<alt>` → `hero<N>.<fmt>` → `hero<N>.<alt>` → CSS fallback.
+   Otomatik oynatma engellenirse (iOS Düşük Güç Modu) ilk dokunuş/tık/tuşta başlıyor.
+5. **Mobil medya bütçesi:** ayrı mobil hero kopyası + ayrı 720 px kare seti üretildi.
+   `STEP=2` tek başına yetmiyordu: iOS mp4'e düştüğü için en ağır senaryo 3.3 MB'ye
+   çıkıyordu. Şimdi en ağır senaryo **2.1 MB**. `navigator.connection.saveData` açıksa
+   hero videosu ve kare seti hiç indirilmiyor (prosedürel sahne çiziliyor).
+6. **Mobil menü:** zaten vardı; `aria-expanded` + `aria-label` güncellemesi, **Esc ile kapanma**,
+   açılınca ilk linke odak, kapanınca odağın düğmeye dönmesi ve menü içinde Tab döngüsü eklendi.
+   Arka plan kaydırma kilidi korundu.
+7. **Mobil sabit alt bar:** zaten vardı; yüksekliği `--mbar-h` değişkenine bağlandı,
+   `body` alt payı ve demo anahtarının konumu bu değişkenden hesaplanıyor.
+   Sol/sağ/alt `env(safe-area-inset-*)` payları eklendi.
+8. **Demo senaryo anahtarı** mobilde **katlanabilir**: kapalıyken tek bir 44 px'lik
+   "Senaryo" hapı, alt barın 10 px üstünde (ölçüldü: panel alt kenarı 738 px, alt bar 741 px).
+   Menü açıkken ve klavye açıkken gizleniyor.
+9. **Klavye:** sayı girişleri `inputmode="decimal"` + `enterkeyhint="done"`, font 16 px
+   (iOS yakınlaştırmasını engeller). Alan odaklanınca `body.kb` sınıfı ile alt bar ve demo
+   anahtarı kalkıyor; BMI sonucu ilk göründüğünde `scrollIntoView({block:'nearest'})` ile
+   görünür kalıyor.
+10. **Güvenli alan:** `viewport-fit=cover` + `--pad`, `.section`, `.mbar`, `.demo-bar`,
+    `.scrub-card` için `env(safe-area-inset-*)`.
+11. **Yatay mod:** `min-height:600px` hero'yu 375 px yüksekliğinde ekrana sığmaz hale
+    getiriyordu → kısa ekranda kaldırıldı, hero dikeyde ortalandı, başlık küçültüldü.
+    Hero metni ve iki CTA ilk ekranda görünür.
+12. **`senaryolar.html`** de aynı kurallara göre düzeltildi (kart etiketleri, meta satırları,
+    "Bu senaryoyu aç" düğmesi, footer).
+
+### Ölçüm (tarayıcıdan, tahmin değil)
+
+| Genişlik | Yatay taşma | <44 px hedef | <13 px yazı | Konsol |
+|---|---|---|---|---|
+| 320 | yok | 0 | 0 | temiz |
+| 360 | yok | 0 | 0 | temiz |
+| 375 | yok | 0 | 0 | temiz |
+| 390 | yok | 0 | 0 | temiz |
+| 414 | yok | 0 | 0 | temiz |
+| 812×375 (yatay) | yok | 0 | 0 | temiz |
+
+Önce: **35** adet 44 px altı hedef, **63** adet 13 px altı yazı (375×812).
+Ölçüm sadece açılış durumunda değil; **mobil menü açık**, **demo anahtarı açık**,
+**BMI sonucu görünür** ve **ön değerlendirme seçili** durumlarında da tekrarlandı — hepsi 0.
+
+Ekran görüntüleri: `_tools/tmp/mobil/` (375 hero · 375 BMI · 375 iletişim · 375 menü ·
+yatay 812×375 · 1440 hero).
+
+### Bilinen kalan konular
+
+- Hero'daki hap etiketi 375 px'te iki satıra sarıyor ("… UZMANI ·" / "KÜTAHYA").
+  Uzun unvan + büyük harf + harf aralığı tek satıra sığmıyor; sarma düzgün hizalandı.
+  Müşteri unvanı kısaysa tek satıra döner.
+- Mobil kare seti 720 px; 3× ekranda scroll sahnesi masaüstü kadar keskin değil.
+  Bilinçli takas — 4 MB yerine 0.8 MB. Daha keskin isteniyorsa `scale=900` ile yeniden üret.
+- Mobil hero kopyaları crf 31; hızlı hareket eden yeni bir videoda blok oluşabilir,
+  **yeni video gelince boyut/kaliteyi tekrar ölç**.
+- `viewport-fit=cover` + `env()` değerleri gerçek çentikli cihazda doğrulanmadı
+  (masaüstü tarayıcıda inset'ler 0 döner).
 
 ---
 
@@ -311,6 +433,32 @@ en karanlık senaryoya (frames/a, L=0.004) göre kurulduğu için orada bol payl
 
 Başlıklar büyük metin olduğu için WCAG eşiği 3:1; yine de hepsi 4.5'in üstünde.
 
+### Mobil — yeniden ölçüldü (Eylül 2026)
+
+Mobil kare seti ve hero kopyaları **yeniden kodlandı**, yazı boyutları büyüdü → ölçüm
+tekrarlandı. Yöntem aynı: kare/video metin bölgesine cover-fit çizilir, satır yüksekliğinde
+hücrelere bölünüp en karanlık hücrenin luminansı bulunur, üstüne **mobil** yıkama
+gradyanının o y konumundaki alfası uygulanır (mobilde yıkama yatay değil tekdüze).
+
+375×812'de, 60 mobil kare × 2 set ve 12 zaman noktası × 3 hero:
+
+| Metin | En düşük oran | Eşik |
+|---|---|---|
+| `.hero-kick` (hap zeminli) | 6.87:1 | 4.5 |
+| `.hero h1` | 9.12:1 | 3.0 |
+| `.hero-sub` | 7.63:1 | 4.5 |
+| `.hero-note` | 9.30:1 | 4.5 |
+| nav marka adı | 14.25:1 | 4.5 |
+| nav marka alt satırı (`--ink-dim`) | **5.36:1** ← en düşük | 4.5 |
+| `.stage-num` (hap zeminli) | 6.87:1 | 4.5 |
+| sahne `h2` | 9.22:1 | 3.0 |
+| sahne `p` | 7.79:1 | 4.5 |
+| `.scrub-hint` | 11.67:1 | 4.5 |
+
+Mobil değerler masaüstünden yüksek: orada yıkama yatay gradyan (sağ taraf açık),
+mobilde tüm genişlikte tekdüze 0.56–0.66. Yazı boyutları yalnızca **arttığı** için
+hiçbir eşik yükselmedi.
+
 **Gradyanın taşıyamadığı iki yer, yıkamayı artırmak yerine noktasal çözüldü:**
 
 - **Yeşil vurgu metni** (`--leaf-dark`) hero1'de 0.67 alfa istiyordu — tüm frame'i
@@ -351,9 +499,13 @@ Footer'da genel bilgilendirme notu var. BMI aracı sonucu "tanı değildir" uyar
 ## Müşteriye teslim listesi
 
 1. **Senaryoyu sabitle** — `HERO` / `SCRL` sabitlerine tek değer yaz, URL parametresini kaldır.
-2. **Demo anahtarını sil** — `<div class="demo-bar">` bloğu + `.demo-bar` CSS'i + `demoBar()` JS.
+2. **Demo anahtarını sil** — `<div class="demo-bar">` bloğu (içindeki `.demo-toggle` ve
+   `.demo-body` dahil) + tüm `.demo-*` CSS kuralları (base ve mobil blok) + `demoBar()` JS.
 3. **Senaryolar sekmesini sil** — nav ve footer'daki `.nav-demo` linkleri + `senaryolar.html`
    dosyası + kullanılmayan hero/frames setleri.
+   **Mobil dosyaları unutma:** seçilen senaryonun `hero<N>m.mp4/.webm` ve `frames/<s>m/`
+   kalır, diğerleri silinir. Mobil kopyalar silinirse site çalışır ama telefonda
+   masaüstü dosyaları iner (hata değil, sadece 3–4 kat veri).
 4. **`BRAND` objesini doldur** — ad, unvan, şehir, tel, telHref, wa, adres, saat1, saat2.
 5. **`[KÖŞELİ PARANTEZ]` yer tutucularını doldur** — hepsi sayfada yeşil çerçeveli görünür,
    gözden kaçmaz. Diyetisyenden öğrenmeden doldurma:

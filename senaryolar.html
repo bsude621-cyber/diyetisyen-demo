@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>6 Senaryo — Diyetisyen Demo</title>
 <meta name="robots" content="noindex">
 <style>
@@ -103,11 +103,27 @@ footer a{color:var(--leaf-dark);font-weight:600}
 
 @media(max-width:1080px){ .grid{grid-template-columns:repeat(2,1fr)} }
 @media(max-width:700px){
-  .wrap{padding:22px 18px 64px}
+  .wrap{padding:22px max(18px,env(safe-area-inset-left)) 64px max(18px,env(safe-area-inset-right))}
   .topbar{margin-bottom:28px}
   .brand-sub{display:none}
   .grid{grid-template-columns:1fr;gap:18px}
   .duo{aspect-ratio:2/1}
+}
+/* ---- MOBİL UYUM (Eylül 2026): dokunma hedefi ≥44px, yazı ≥13px ---- */
+@media(max-width:900px),(max-height:540px){
+  .brand{min-height:44px}
+  .back{min-height:44px;display:inline-flex;align-items:center;font-size:14px;padding:10px 18px}
+  header .kick{font-size:13px;letter-spacing:.16em;line-height:1.5}
+  header p{font-size:16.5px}
+  .chip{font-size:13.5px;padding:10px 16px;line-height:1.5}
+  .pane .tag{font-size:13px;letter-spacing:.1em;padding:6px 12px}
+  .no{font-size:13px;letter-spacing:.14em;line-height:1.5}
+  .meta div{flex-direction:column;gap:4px;font-size:15px}
+  .meta .k{width:auto;font-size:13px;letter-spacing:.1em;padding-top:0}
+  .note{font-size:16px;line-height:1.7}
+  .open{min-height:48px;font-size:15.5px}
+  footer{font-size:13.5px;line-height:1.55}
+  footer a{min-height:44px;display:inline-flex;align-items:center}
 }
 @media(prefers-reduced-motion:reduce){ .card{transition:none} .card:hover{transform:none} }
 </style>
